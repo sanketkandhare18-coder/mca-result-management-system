@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — MCA Result Management</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <h2>Genba Sopanrao Moze college of engineering</h2>
+        <span>MCA Result Management</span>
+    </div>
+    <div class="sidebar-role-badge">🛡️ Master Admin</div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Overview</div>
+        <div class="nav-item active" data-page="dashboard">
+            <span class="nav-icon">📊</span> Dashboard
+        </div>
+
+        <div class="nav-section-label">Management</div>
+        <div class="nav-item" data-page="students">
+            <span class="nav-icon">🎒</span> Students
+        </div>
+        <div class="nav-item" data-page="teachers">
+            <span class="nav-icon">👨‍🏫</span> Teachers
+        </div>
+        <div class="nav-item" data-page="subjects">
+            <span class="nav-icon">📚</span> Subjects
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar" id="adminAvatar">A</div>
+            <div class="user-info-text">
+                <strong id="adminName">Admin</strong>
+                <span id="adminEmail">—</span>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </div>
+</aside>
+
+<!-- ========== MAIN CONTENT ========== -->
+<div class="main-content">
+    <div class="topbar">
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="topbar-right">
+            <span style="font-size:13px;color:#718096;">Faculty: <strong>MCA</strong></span>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div id="msgBox" class="message-box" style="margin-bottom:16px;"></div>
+
+        <!-- ===== DASHBOARD PAGE ===== -->
+        <div id="page-dashboard" class="page-section">
+            <div class="stats-row" id="statsRow">
+                <div class="stat-card">
+                    <div class="stat-icon navy">🎒</div>
+                    <div class="stat-body">
+                        <strong id="totalStudents">—</strong>
+                        <span>Total Students</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon gold">👨‍🏫</div>
+                    <div class="stat-body">
+                        <strong id="totalTeachers">—</strong>
+                        <span>Total Teachers</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue">📚</div>
+                    <div class="stat-body">
+                        <strong id="totalSubjects">—</strong>
+                        <span>Total Subjects</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-body">
+                        <strong id="totalPublished">—</strong>
+                        <span>Results Published</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h4>Overall Result Analysis</h4>
+                    <canvas id="overallChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Class-wise Result Analysis</h4>
+                    <canvas id="classChart"></canvas>
+                </div>
+                <div class="chart-card" style="grid-column: span 2;">
+                    <h4>Subject-wise Pass/Fail Analysis</h4>
+                    <canvas id="subjectChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== STUDENTS PAGE ===== -->
+        <div id="page-students" class="page-section" style="display:none;">
+            <div class="toolbar">
+                <select id="studentClassFilter">
+                    <option value="">All Classes</option>
+                    <option>FY MCA</option><option>SY MCA</option><option>TY MCA</option>
+                </select>
+                <select id="studentSemFilter">
+                    <option value="">All Semesters</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                </select>
+                <input type="text" id="studentSearch" placeholder="🔍 Search by name or roll no…" style="min-width:220px;">
+                <div class="spacer"></div>
+                <button class="btn btn-gold" onclick="openAddStudent()">+ Add Student</button>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Students List</h3>
+                    <span id="studentCount" style="font-size:13px;color:#718096;"></span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Roll No.</th>
+                                <th>Class</th>
+                                <th>Semester</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsBody">
+                            <tr><td colspan="7" style="text-align:center;padding:40px;color:#718096;">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TEACHERS PAGE ===== -->
+        <div id="page-teachers" class="page-section" style="display:none;">
+            <div class="toolbar">
+                <input type="text" id="teacherSearch" placeholder="🔍 Search teacher…" style="min-width:220px;">
+                <div class="spacer"></div>
+                <button class="btn btn-gold" onclick="openAddTeacher()">+ Add Teacher</button>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Teachers List</h3>
+                    <span id="teacherCount" style="font-size:13px;color:#718096;"></span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Subjects Assigned</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachersBody">
+                            <tr><td colspan="5" style="text-align:center;padding:40px;color:#718096;">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SUBJECTS PAGE ===== -->
+        <div id="page-subjects" class="page-section" style="display:none;">
+            <div class="toolbar">
+                <select id="subjectClassFilter">
+                    <option value="">All Classes</option>
+                    <option>FY MCA</option><option>SY MCA</option><option>TY MCA</option>
+                </select>
+                <select id="subjectSemFilter">
+                    <option value="">All Semesters</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                </select>
+                <div class="spacer"></div>
+                <button class="btn btn-gold" onclick="openAddSubject()">+ Add Subject</button>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Subjects List</h3>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Subject Name</th>
+                                <th>Class</th>
+                                <th>Semester</th>
+                                <th>Max Marks</th>
+                                <th>Assigned Teacher</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subjectsBody">
+                            <tr><td colspan="7" style="text-align:center;padding:40px;color:#718096;">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- page-content -->
+</div><!-- main-content -->
+</div><!-- shell -->
+
+
+<!-- ===== MODAL: Add/Edit Student ===== -->
+<div id="studentModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="studentModalTitle">Add Student</h3>
+            <button class="modal-close" onclick="closeModal('studentModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="studentId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="sName" placeholder="Student full name">
+                </div>
+                <div class="form-group">
+                    <label>Roll Number *</label>
+                    <input type="text" id="sRoll" placeholder="e.g. MCA001">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email Address *</label>
+                <input type="email" id="sEmail" placeholder="student@email.com">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Class *</label>
+                    <select id="sClass">
+                        <option value="">Select class</option>
+                        <option>FY MCA</option><option>SY MCA</option><option>TY MCA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Semester *</label>
+                    <select id="sSemester">
+                        <option value="">Select semester</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="text" id="sPassword" placeholder="Set login password">
+            </div>
+            <div id="studentModalMsg" class="message-box"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('studentModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveStudent()">Save Student</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: Add/Edit Teacher ===== -->
+<div id="teacherModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="teacherModalTitle">Add Teacher</h3>
+            <button class="modal-close" onclick="closeModal('teacherModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="teacherId">
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="tName" placeholder="Teacher full name">
+            </div>
+            <div class="form-group">
+                <label>Email Address *</label>
+                <input type="email" id="tEmail" placeholder="teacher@hvdesai.edu">
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="text" id="tPassword" placeholder="Set login password">
+            </div>
+            <div id="teacherModalMsg" class="message-box"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('teacherModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveTeacher()">Save Teacher</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: Add/Edit Subject ===== -->
+<div id="subjectModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="subjectModalTitle">Add Subject</h3>
+            <button class="modal-close" onclick="closeModal('subjectModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="subjectId">
+            <div class="form-group">
+                <label>Subject Name *</label>
+                <input type="text" id="subName" placeholder="e.g. Data Structures">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Class *</label>
+                    <select id="subClass">
+                        <option value="">Select class</option>
+                        <option>FY MCA</option><option>SY MCA</option><option>TY MCA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Semester *</label>
+                    <select id="subSem">
+                        <option value="">Select semester</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Max Marks</label>
+                    <input type="number" id="subMax" value="100" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Assign Teacher</label>
+                    <select id="subTeacher">
+                        <option value="">— None —</option>
+                    </select>
+                </div>
+            </div>
+            <div id="subjectModalMsg" class="message-box"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('subjectModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveSubject()">Save Subject</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: Confirm Delete ===== -->
+<div id="confirmModal" class="modal-overlay" style="display:none;">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h3>Confirm Delete</h3>
+            <button class="modal-close" onclick="closeModal('confirmModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirmMsg" style="color:#4a5568;font-size:15px;"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+            <button class="btn btn-danger" id="confirmBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+
+/* ============================================================
+   State
+   ============================================================ */
+var admin        = JSON.parse(sessionStorage.getItem('adminUser') || 'null');
+var allStudents  = [];
+var allTeachers  = [];
+var allSubjects  = [];
+var allResults   = [];
+var chartInstances = {};
+
+/* Guard: redirect if not logged in */
+if (!admin) { window.location.href = 'admin-login.html'; }
+
+document.getElementById('adminName').textContent  = admin.name;
+document.getElementById('adminEmail').textContent = admin.email;
+document.getElementById('adminAvatar').textContent = admin.name.charAt(0).toUpperCase();
+
+function logout() {
+    sessionStorage.removeItem('adminUser');
+    window.location.href = 'index.html';
+}
+
+
+/* ============================================================
+   Navigation
+   ============================================================ */
+var pageTitles = { dashboard:'Dashboard', students:'Students', teachers:'Teachers', subjects:'Subjects' };
+
+document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+        var page = this.dataset.page;
+        document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+        this.classList.add('active');
+        document.querySelectorAll('.page-section').forEach(function(s) { s.style.display = 'none'; });
+        document.getElementById('page-' + page).style.display = 'block';
+        document.getElementById('pageTitle').textContent = pageTitles[page];
+
+        if (page === 'students') renderStudentsTable();
+        if (page === 'teachers') renderTeachersTable();
+        if (page === 'subjects') renderSubjectsTable();
+    });
+});
+
+
+/* ============================================================
+   Bootstrap: load all data on startup
+   ============================================================ */
+async function loadAll() {
+    var [sRes, tRes, subRes, rRes] = await Promise.all([
+        window._db.from('students').select('*').order('name'),
+        window._db.from('teachers').select('*').order('name'),
+        window._db.from('subjects').select('*,teachers(name)').order('class').order('semester').order('sort_order'),
+        window._db.from('results').select('*')
+    ]);
+    allStudents = sRes.data  || [];
+    allTeachers = tRes.data  || [];
+    allSubjects = subRes.data || [];
+    allResults  = rRes.data  || [];
+    renderDashboard();
+}
+
+loadAll();
+
+
+/* ============================================================
+   Dashboard
+   ============================================================ */
+function renderDashboard() {
+    document.getElementById('totalStudents').textContent  = allStudents.length;
+    document.getElementById('totalTeachers').textContent  = allTeachers.length;
+    document.getElementById('totalSubjects').textContent  = allSubjects.length;
+
+    var published = allResults.filter(function(r) { return r.published; }).length;
+    document.getElementById('totalPublished').textContent = published;
+
+    buildOverallChart();
+    buildClassChart();
+    buildSubjectChart();
+}
+
+/* Overall pass/fail pie */
+function buildOverallChart() {
+    var pub   = allResults.filter(function(r) { return r.published; });
+    var pass  = pub.filter(function(r) { return r.percentage >= 35; }).length;
+    var fail  = pub.length - pass;
+    var noRes = allStudents.length - pub.length;
+
+    if (chartInstances.overall) chartInstances.overall.destroy();
+    chartInstances.overall = new Chart(document.getElementById('overallChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Passed', 'Failed', 'Awaited'],
+            datasets: [{ data: [pass, fail, noRes], backgroundColor: ['#4ade80','#f87171','#93c5fd'], borderWidth: 2 }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+    });
+}
+
+/* Class-wise bar chart */
+function buildClassChart() {
+    var classes = ['FY MCA', 'SY MCA', 'TY MCA'];
+    var pass = [], fail = [];
+    classes.forEach(function(cls) {
+        var stuInClass  = allStudents.filter(function(s) { return s.class === cls; }).map(function(s) { return s.id; });
+        var resInClass  = allResults.filter(function(r) { return stuInClass.includes(r.student_id) && r.published; });
+        pass.push(resInClass.filter(function(r) { return r.percentage >= 35; }).length);
+        fail.push(resInClass.filter(function(r) { return r.percentage < 35; }).length);
+    });
+
+    if (chartInstances.cls) chartInstances.cls.destroy();
+    chartInstances.cls = new Chart(document.getElementById('classChart'), {
+        type: 'bar',
+        data: {
+            labels: classes,
+            datasets: [
+                { label: 'Passed', data: pass, backgroundColor: '#4ade80', borderRadius: 6 },
+                { label: 'Failed', data: fail, backgroundColor: '#f87171', borderRadius: 6 }
+            ]
+        },
+        options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+}
+
+/* Subject-wise bar chart — pass % per subject */
+function buildSubjectChart() {
+    /* Only subjects that have at least one published result */
+    var labels = [], passArr = [], failArr = [];
+
+    allSubjects.forEach(function(sub) {
+        /* Find students in this subject's class+sem */
+        var stuIds = allStudents
+            .filter(function(s) { return s.class === sub.class && s.semester === sub.semester; })
+            .map(function(s) { return s.id; });
+        if (!stuIds.length) return;
+
+        /* Need marks for this subject */
+        /* We aggregate via allResults pass/fail per class+sem for simplicity */
+        var pubRes = allResults.filter(function(r) { return stuIds.includes(r.student_id) && r.published; });
+        if (!pubRes.length) return;
+
+        labels.push(sub.subject_name.substring(0, 18));
+        passArr.push(pubRes.filter(function(r) { return r.percentage >= 35; }).length);
+        failArr.push(pubRes.filter(function(r) { return r.percentage < 35; }).length);
+    });
+
+    if (!labels.length) { labels = ['No Data']; passArr = [0]; failArr = [0]; }
+
+    if (chartInstances.subj) chartInstances.subj.destroy();
+    chartInstances.subj = new Chart(document.getElementById('subjectChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Passed', data: passArr, backgroundColor: 'rgba(74,222,128,.7)', borderRadius: 4 },
+                { label: 'Failed', data: failArr, backgroundColor: 'rgba(248,113,113,.7)', borderRadius: 4 }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { position: 'bottom' } },
+            scales: { x: { beginAtZero: true, stacked: false } }
+        }
+    });
+}
+
+
+/* ============================================================
+   Students
+   ============================================================ */
+function getFilteredStudents() {
+    var cls  = document.getElementById('studentClassFilter').value;
+    var sem  = document.getElementById('studentSemFilter').value;
+    var srch = document.getElementById('studentSearch').value.toLowerCase();
+
+    return allStudents.filter(function(s) {
+        if (cls  && s.class !== cls)                              return false;
+        if (sem  && String(s.semester) !== sem)                   return false;
+        if (srch && !s.name.toLowerCase().includes(srch) && !s.roll_number.toLowerCase().includes(srch)) return false;
+        return true;
+    });
+}
+
+function renderStudentsTable() {
+    var list = getFilteredStudents();
+    document.getElementById('studentCount').textContent = list.length + ' students';
+    var body = document.getElementById('studentsBody');
+
+    if (!list.length) {
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#718096;">No students found.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = list.map(function(s, i) {
+        return '<tr>' +
+            '<td>' + (i+1) + '</td>' +
+            '<td><strong>' + esc(s.name) + '</strong></td>' +
+            '<td><span class="badge badge-navy">' + esc(s.roll_number) + '</span></td>' +
+            '<td><span class="badge badge-blue">' + esc(s.class) + '</span></td>' +
+            '<td>Semester ' + s.semester + '</td>' +
+            '<td style="color:#718096;">' + esc(s.email) + '</td>' +
+            '<td style="display:flex;gap:6px;flex-wrap:wrap;">' +
+                '<button class="action-btn edit"   onclick="openEditStudent(\'' + s.id + '\')">✏️ Edit</button>' +
+                '<button class="action-btn delete" onclick="confirmDelete(\'student\',\'' + s.id + '\',\'' + esc(s.name) + '\')">🗑 Delete</button>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+['studentClassFilter','studentSemFilter','studentSearch'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', renderStudentsTable);
+});
+
+function openAddStudent() {
+    document.getElementById('studentId').value       = '';
+    document.getElementById('sName').value           = '';
+    document.getElementById('sRoll').value           = '';
+    document.getElementById('sEmail').value          = '';
+    document.getElementById('sClass').value          = '';
+    document.getElementById('sSemester').value       = '';
+    document.getElementById('sPassword').value       = '';
+    document.getElementById('studentModalTitle').textContent = 'Add Student';
+    document.getElementById('studentModal').style.display   = 'flex';
+}
+
+function openEditStudent(id) {
+    var s = allStudents.find(function(x) { return x.id === id; });
+    if (!s) return;
+    document.getElementById('studentId').value    = s.id;
+    document.getElementById('sName').value        = s.name;
+    document.getElementById('sRoll').value        = s.roll_number;
+    document.getElementById('sEmail').value       = s.email;
+    document.getElementById('sClass').value       = s.class;
+    document.getElementById('sSemester').value    = String(s.semester);
+    document.getElementById('sPassword').value    = s.password;
+    document.getElementById('studentModalTitle').textContent = 'Edit Student';
+    document.getElementById('studentModal').style.display   = 'flex';
+}
+
+async function saveStudent() {
+    var id    = document.getElementById('studentId').value;
+    var name  = document.getElementById('sName').value.trim();
+    var roll  = document.getElementById('sRoll').value.trim().toUpperCase();
+    var email = document.getElementById('sEmail').value.trim();
+    var cls   = document.getElementById('sClass').value;
+    var sem   = parseInt(document.getElementById('sSemester').value);
+    var pass  = document.getElementById('sPassword').value.trim();
+
+    if (!name || !roll || !email || !cls || !sem || !pass) {
+        showMsg('studentModalMsg','Please fill in all fields.','error');
+        return;
+    }
+
+    var payload = { name, roll_number: roll, email, class: cls, semester: sem, password: pass };
+
+    var { data, error } = id
+        ? await window._db.from('students').update(payload).eq('id', id).select().single()
+        : await window._db.from('students').insert(payload).select().single();
+
+    if (error) { showMsg('studentModalMsg', error.message, 'error'); return; }
+
+    /* Sync local array */
+    if (id) {
+        allStudents = allStudents.map(function(s) { return s.id === id ? data : s; });
+    } else {
+        allStudents.push(data);
+    }
+
+    closeModal('studentModal');
+    renderStudentsTable();
+    showMsg('msgBox', (id ? 'Student updated.' : 'Student added.'), 'success');
+}
+
+
+/* ============================================================
+   Teachers
+   ============================================================ */
+function renderTeachersTable() {
+    var srch = document.getElementById('teacherSearch').value.toLowerCase();
+    var list = allTeachers.filter(function(t) {
+        return !srch || t.name.toLowerCase().includes(srch) || t.email.toLowerCase().includes(srch);
+    });
+    document.getElementById('teacherCount').textContent = list.length + ' teachers';
+    var body = document.getElementById('teachersBody');
+
+    if (!list.length) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#718096;">No teachers found.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = list.map(function(t, i) {
+        /* Count subjects assigned to this teacher */
+        var subCount = allSubjects.filter(function(s) { return s.teacher_id === t.id; }).length;
+        return '<tr>' +
+            '<td>' + (i+1) + '</td>' +
+            '<td><strong>' + esc(t.name) + '</strong></td>' +
+            '<td style="color:#718096;">' + esc(t.email) + '</td>' +
+            '<td>' + (subCount ? '<span class="badge badge-blue">' + subCount + ' subject' + (subCount>1?'s':'') + '</span>' : '<span class="badge badge-gray">None</span>') + '</td>' +
+            '<td style="display:flex;gap:6px;">' +
+                '<button class="action-btn edit"   onclick="openEditTeacher(\'' + t.id + '\')">✏️ Edit</button>' +
+                '<button class="action-btn delete" onclick="confirmDelete(\'teacher\',\'' + t.id + '\',\'' + esc(t.name) + '\')">🗑 Delete</button>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+document.getElementById('teacherSearch').addEventListener('input', renderTeachersTable);
+
+function openAddTeacher() {
+    document.getElementById('teacherId').value       = '';
+    document.getElementById('tName').value           = '';
+    document.getElementById('tEmail').value          = '';
+    document.getElementById('tPassword').value       = '';
+    document.getElementById('teacherModalTitle').textContent = 'Add Teacher';
+    document.getElementById('teacherModal').style.display   = 'flex';
+}
+
+function openEditTeacher(id) {
+    var t = allTeachers.find(function(x) { return x.id === id; });
+    if (!t) return;
+    document.getElementById('teacherId').value    = t.id;
+    document.getElementById('tName').value        = t.name;
+    document.getElementById('tEmail').value       = t.email;
+    document.getElementById('tPassword').value    = t.password;
+    document.getElementById('teacherModalTitle').textContent = 'Edit Teacher';
+    document.getElementById('teacherModal').style.display   = 'flex';
+}
+
+async function saveTeacher() {
+    var id    = document.getElementById('teacherId').value;
+    var name  = document.getElementById('tName').value.trim();
+    var email = document.getElementById('tEmail').value.trim();
+    var pass  = document.getElementById('tPassword').value.trim();
+
+    if (!name || !email || !pass) { showMsg('teacherModalMsg','Please fill in all fields.','error'); return; }
+
+    var payload = { name, email, password: pass };
+
+    var { data, error } = id
+        ? await window._db.from('teachers').update(payload).eq('id', id).select().single()
+        : await window._db.from('teachers').insert(payload).select().single();
+
+    if (error) { showMsg('teacherModalMsg', error.message, 'error'); return; }
+
+    if (id) {
+        allTeachers = allTeachers.map(function(t) { return t.id === id ? data : t; });
+    } else {
+        allTeachers.push(data);
+    }
+
+    closeModal('teacherModal');
+    renderTeachersTable();
+    showMsg('msgBox', (id ? 'Teacher updated.' : 'Teacher added.'), 'success');
+}
+
+
+/* ============================================================
+   Subjects
+   ============================================================ */
+function getFilteredSubjects() {
+    var cls = document.getElementById('subjectClassFilter').value;
+    var sem = document.getElementById('subjectSemFilter').value;
+    return allSubjects.filter(function(s) {
+        if (cls && s.class !== cls)               return false;
+        if (sem && String(s.semester) !== sem)    return false;
+        return true;
+    });
+}
+
+function renderSubjectsTable() {
+    var list = getFilteredSubjects();
+    var body = document.getElementById('subjectsBody');
+
+    if (!list.length) {
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#718096;">No subjects found.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = list.map(function(sub, i) {
+        /* Teacher name from joined data or lookup */
+        var tName = '—';
+        if (sub.teacher_id) {
+            var t = allTeachers.find(function(x) { return x.id === sub.teacher_id; });
+            if (t) tName = t.name;
+            else if (sub.teachers) tName = sub.teachers.name;
+        }
+        return '<tr>' +
+            '<td>' + (i+1) + '</td>' +
+            '<td><strong>' + esc(sub.subject_name) + '</strong></td>' +
+            '<td><span class="badge badge-blue">' + esc(sub.class) + '</span></td>' +
+            '<td>Sem ' + sub.semester + '</td>' +
+            '<td>' + sub.max_marks + '</td>' +
+            '<td>' + (sub.teacher_id ? '<span class="badge badge-green">' + esc(tName) + '</span>' : '<span class="badge badge-gray">Unassigned</span>') + '</td>' +
+            '<td style="display:flex;gap:6px;flex-wrap:wrap;">' +
+                '<button class="action-btn edit"   onclick="openEditSubject(\'' + sub.id + '\')">✏️ Edit</button>' +
+                '<button class="action-btn delete" onclick="confirmDelete(\'subject\',\'' + sub.id + '\',\'' + esc(sub.subject_name) + '\')">🗑 Delete</button>' +
+            '</td>' +
+        '</tr>';
+    }).join('');
+}
+
+['subjectClassFilter','subjectSemFilter'].forEach(function(id) {
+    document.getElementById(id).addEventListener('change', renderSubjectsTable);
+});
+
+function openAddSubject() {
+    document.getElementById('subjectId').value  = '';
+    document.getElementById('subName').value    = '';
+    document.getElementById('subClass').value   = '';
+    document.getElementById('subSem').value     = '';
+    document.getElementById('subMax').value     = 100;
+    document.getElementById('subjectModalTitle').textContent = 'Add Subject';
+    populateTeacherDropdown('subTeacher', null);
+    document.getElementById('subjectModal').style.display = 'flex';
+}
+
+function openEditSubject(id) {
+    var sub = allSubjects.find(function(x) { return x.id === id; });
+    if (!sub) return;
+    document.getElementById('subjectId').value  = sub.id;
+    document.getElementById('subName').value    = sub.subject_name;
+    document.getElementById('subClass').value   = sub.class;
+    document.getElementById('subSem').value     = String(sub.semester);
+    document.getElementById('subMax').value     = sub.max_marks;
+    document.getElementById('subjectModalTitle').textContent = 'Edit Subject';
+    populateTeacherDropdown('subTeacher', sub.teacher_id);
+    document.getElementById('subjectModal').style.display = 'flex';
+}
+
+/* Fill teacher select with all teachers; pre-select current */
+function populateTeacherDropdown(selectId, currentTeacherId) {
+    var sel = document.getElementById(selectId);
+    sel.innerHTML = '<option value="">— None —</option>' +
+        allTeachers.map(function(t) {
+            return '<option value="' + t.id + '"' + (t.id === currentTeacherId ? ' selected' : '') + '>' + esc(t.name) + '</option>';
+        }).join('');
+}
+
+async function saveSubject() {
+    var id   = document.getElementById('subjectId').value;
+    var name = document.getElementById('subName').value.trim();
+    var cls  = document.getElementById('subClass').value;
+    var sem  = parseInt(document.getElementById('subSem').value);
+    var max  = parseInt(document.getElementById('subMax').value) || 100;
+    var tid  = document.getElementById('subTeacher').value;
+    if (tid) tid = String(tid).trim();
+    if (!tid) tid = null;
+
+    /* One teacher can teach multiple subjects, but one subject = one teacher */
+    var payload = { subject_name: name, class: cls, semester: sem, max_marks: max, teacher_id: tid };
+
+    var { data, error } = id
+        ? await window._db.from('subjects').update(payload).eq('id', id).select('*,teachers(name)').single()
+        : await window._db.from('subjects').insert(payload).select('*,teachers(name)').single();
+
+    if (error) { showMsg('subjectModalMsg', error.message, 'error'); return; }
+
+    if (id) {
+        allSubjects = allSubjects.map(function(s) { return s.id === id ? data : s; });
+    } else {
+        allSubjects.push(data);
+    }
+
+    closeModal('subjectModal');
+    renderSubjectsTable();
+    showMsg('msgBox', (id ? 'Subject updated.' : 'Subject added.'), 'success');
+}
+
+
+/* ============================================================
+   Delete (shared confirm)
+   ============================================================ */
+function confirmDelete(type, id, label) {
+    document.getElementById('confirmMsg').textContent = 'Delete "' + label + '"? This action cannot be undone.';
+    document.getElementById('confirmModal').style.display = 'flex';
+
+    document.getElementById('confirmBtn').onclick = async function() {
+        closeModal('confirmModal');
+        var table = type === 'student' ? 'students' : type === 'teacher' ? 'teachers' : 'subjects';
+        var { error } = await window._db.from(table).delete().eq('id', id);
+        if (error) { showMsg('msgBox', error.message, 'error'); return; }
+
+        if (type === 'student')  { allStudents = allStudents.filter(function(x){ return x.id !== id; }); renderStudentsTable(); }
+        if (type === 'teacher')  { allTeachers = allTeachers.filter(function(x){ return x.id !== id; }); renderTeachersTable(); }
+        if (type === 'subject')  { allSubjects = allSubjects.filter(function(x){ return x.id !== id; }); renderSubjectsTable(); }
+
+        showMsg('msgBox', label + ' deleted.', 'success');
+    };
+}
+
+
+/* ============================================================
+   Utility helpers
+   ============================================================ */
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+/* HTML escape to prevent injection in innerHTML */
+function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Close modals when clicking overlay */
+document.querySelectorAll('.modal-overlay').forEach(function(ov) {
+    ov.addEventListener('click', function(e) {
+        if (e.target === ov) ov.style.display = 'none';
+    });
+});
+
+</script>
+</body>
+</html>

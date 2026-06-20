@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Login — MCA Result Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="login-page">
+    <div class="login-box">
+        <div class="lb-logo">
+            <div style="font-size:40px;margin-bottom:10px;">👨‍🏫</div>
+            <h1>Teacher Login</h1>
+            <p>Genba Sopanrao Moze College Of Engineering — MCA 
+    Result System</p>
+        </div>
+
+        <form id="teacherForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="teacherEmail" placeholder="teacher@gsmoze.edu" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="teacherPassword" placeholder="Enter password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Login as Teacher</button>
+            <div id="loginError" class="error-message" style="display:none;"></div>
+        </form>
+
+        <p style="text-align:center;margin-top:20px;font-size:13px;color:#718096;">
+            <a href="index.html">← Back to Home</a>
+        </p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+    document.getElementById('teacherForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var errEl = document.getElementById('loginError');
+        errEl.style.display = 'none';
+
+        var email    = document.getElementById('teacherEmail').value.trim();
+        var password = document.getElementById('teacherPassword').value.trim();
+        if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; errEl.style.display = 'block'; return; }
+
+        var btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Logging in…';
+
+        try {
+            var { data, error } = await window._db.from('teachers')
+                .select('id,name,email')
+                .eq('email', email)
+                .eq('password', password)
+                .maybeSingle();
+
+            if (error || !data) {
+                errEl.textContent = 'Invalid email or password.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            sessionStorage.setItem('teacherUser', JSON.stringify(data));
+            window.location.href = 'teacher.html';
+        } catch(err) {
+            errEl.textContent = 'Connection error. Check config.js credentials.';
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Login as Teacher';
+        }
+    });
+</script>
+</body>
+</html>

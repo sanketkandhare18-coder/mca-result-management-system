@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard — MCA Result Management</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+<!-- ========== SIDEBAR ========== -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <h2>Genba Sopanrao Moze college of engineering</h2>
+        <span>MCA Result Management</span>
+    </div>
+    <div class="sidebar-role-badge">👨‍🏫 Teacher</div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Overview</div>
+        <div class="nav-item active" data-page="dashboard">
+            <span class="nav-icon">📊</span> Dashboard
+        </div>
+
+        <div class="nav-section-label">Work</div>
+        <div class="nav-item" data-page="students">
+            <span class="nav-icon">🎒</span> Students & Marks
+        </div>
+        <div class="nav-item" data-page="publish">
+            <span class="nav-icon">📢</span> Publish Results
+        </div>
+        <div class="nav-item" data-page="analysis">
+            <span class="nav-icon">📈</span> Analysis
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar" id="teacherAvatar">T</div>
+            <div class="user-info-text">
+                <strong id="teacherName">Teacher</strong>
+                <span id="teacherEmail">—</span>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </div>
+</aside>
+
+<!-- ========== MAIN ========== -->
+<div class="main-content">
+    <div class="topbar">
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="topbar-right">
+            <span style="font-size:13px;color:#718096;">My Subjects: <strong id="subjectCount">—</strong></span>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div id="msgBox" class="message-box" style="margin-bottom:16px;"></div>
+
+        <!-- ===== TEACHER DASHBOARD ===== -->
+        <div id="page-dashboard" class="page-section">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon gold">📚</div>
+                    <div class="stat-body">
+                        <strong id="dashSubjects">—</strong>
+                        <span>My Subjects</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon navy">🎒</div>
+                    <div class="stat-body">
+                        <strong id="dashStudents">—</strong>
+                        <span>Total Students</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-body">
+                        <strong id="dashPassed">—</strong>
+                        <span>Passed</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">❌</div>
+                    <div class="stat-body">
+                        <strong id="dashFailed">—</strong>
+                        <span>Failed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class-wise toppers per subject -->
+            <div class="card">
+                <div class="card-header"><h3>Class-wise Toppers (Published Results)</h3></div>
+                <div class="card-body" id="toppersContainer">
+                    <p style="color:#718096;font-size:14px;">Loading…</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== STUDENTS & MARKS ===== -->
+        <div id="page-students" class="page-section" style="display:none;">
+            <div class="toolbar">
+                <select id="markClassFilter">
+                    <option value="">Select Class</option>
+                    <option>FY MCA</option><option>SY MCA</option><option>TY MCA</option>
+                </select>
+                <select id="markSemFilter">
+                    <option value="">Select Semester</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                </select>
+            </div>
+
+            <div id="classSubjectsList">
+                <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <p>Select a class and semester to view students.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PUBLISH RESULTS ===== -->
+        <div id="page-publish" class="page-section" style="display:none;">
+            <div class="toolbar">
+                <select id="pubClassFilter">
+                    <option value="">Select Class</option>
+                    <option>FY MCA</option><option>SY MCA</option><option>TY MCA</option>
+                </select>
+                <select id="pubSemFilter">
+                    <option value="">Select Semester</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                </select>
+            </div>
+
+            <div id="publishContainer">
+                <div class="empty-state">
+                    <div class="empty-icon">📢</div>
+                    <p>Select a class and semester to publish results.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ANALYSIS ===== -->
+        <div id="page-analysis" class="page-section" style="display:none;">
+            <div class="charts-grid" id="analysisChartsGrid">
+                <div class="empty-state" style="grid-column:span 2;">
+                    <div class="empty-icon">📊</div>
+                    <p>Analysis loads based on your assigned subjects.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+
+<!-- ===== MODAL: Enter Marks ===== -->
+<div id="marksModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 id="marksModalTitle">Enter Marks</h3>
+            <button class="modal-close" onclick="closeModal('marksModal')">×</button>
+        </div>
+        <div class="modal-body" id="marksModalBody">
+            Loading…
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('marksModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="saveMarks()">Save Marks</button>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+
+/* ============================================================
+   State
+   ============================================================ */
+var teacher      = JSON.parse(sessionStorage.getItem('teacherUser') || 'null');
+var mySubjects   = [];
+var allStudents  = [];
+var allMarks     = [];
+var allResults   = [];
+var chartInst    = {};
+var currentMarksStudentId = null;
+
+if (!teacher) { window.location.href = 'teacher-login.html'; }
+
+document.getElementById('teacherName').textContent   = teacher.name;
+document.getElementById('teacherEmail').textContent  = teacher.email;
+document.getElementById('teacherAvatar').textContent = teacher.name.charAt(0).toUpperCase();
+
+function logout() {
+    sessionStorage.removeItem('teacherUser');
+    window.location.href = 'index.html';
+}
+
+
+/* ============================================================
+   Navigation
+   ============================================================ */
+var pageTitles = { dashboard:'Dashboard', students:'Students & Marks', publish:'Publish Results', analysis:'Analysis' };
+
+document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+        var page = this.dataset.page;
+        document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+        this.classList.add('active');
+        document.querySelectorAll('.page-section').forEach(function(s) { s.style.display = 'none'; });
+        document.getElementById('page-' + page).style.display = 'block';
+        document.getElementById('pageTitle').textContent = pageTitles[page];
+        if (page === 'analysis') buildAnalysisCharts();
+    });
+});
+
+
+/* ============================================================
+   Bootstrap
+   ============================================================ */
+async function loadAll() {
+    if (!teacher || !teacher.id) {
+        console.warn('Teacher object or ID missing from session.');
+        return;
+    }
+
+    var tId = String(teacher.id).trim().toLowerCase();
+
+    /* Fetch ALL subjects and filter locally for robustness */
+    var { data: allSubs, error: subErr } = await window._db.from('subjects')
+        .select('*')
+        .order('class').order('semester').order('sort_order');
+
+    if (subErr) {
+        console.error('Error fetching subjects:', subErr);
+        showMsg('msgBox', 'Error fetching subjects: ' + subErr.message, 'error');
+    }
+
+    /* Local filtering ensures UUID case/trim mismatches don't break detection */
+    mySubjects = (allSubs || []).filter(function(s) {
+        if (!s.teacher_id) return false;
+        return String(s.teacher_id).trim().toLowerCase() === tId;
+    });
+
+    console.log('Teacher ID:', tId);
+    console.log('Assigned Subjects found:', mySubjects.length, mySubjects);
+
+    document.getElementById('subjectCount').textContent = mySubjects.length;
+
+    /* Load ALL MCA students */
+    var { data: stus, error: stuErr } = await window._db.from('students')
+        .select('*')
+        .in('class', ['FY MCA', 'SY MCA', 'TY MCA'])
+        .order('roll_number');
+
+    if (stuErr) { console.error('Error fetching students:', stuErr); }
+    
+    /* Filter students based on teacher allocation (Class + Semester in mySubjects) */
+    var mySlots = mySubjects.map(function(s) { return s.class + '|' + s.semester; });
+    allStudents = (stus || []).filter(function(s) {
+        return mySlots.includes(s.class + '|' + s.semester);
+    });
+
+    var stuIds = allStudents.map(function(s) { return s.id; });
+    if (stuIds.length) {
+        var [mRes, rRes] = await Promise.all([
+            window._db.from('marks').select('*').in('student_id', stuIds),
+            window._db.from('results').select('*').in('student_id', stuIds)
+        ]);
+
+        if (mRes.error) console.error('Error fetching marks:', mRes.error);
+        if (rRes.error) console.error('Error fetching results:', rRes.error);
+
+        allMarks   = mRes.data   || [];
+        allResults = rRes.data || [];
+    }
+
+    renderTeacherDashboard();
+}
+
+loadAll();
+
+
+/* ============================================================
+   Teacher Dashboard
+   ============================================================ */
+function renderTeacherDashboard() {
+    document.getElementById('dashSubjects').textContent = mySubjects.length;
+    document.getElementById('dashStudents').textContent = allStudents.length;
+
+    var pub   = allResults.filter(function(r) { return r.published; });
+    var pass  = pub.filter(function(r) { return r.percentage >= 35; }).length;
+    var fail  = pub.length - pass;
+
+    document.getElementById('dashPassed').textContent = pass;
+    document.getElementById('dashFailed').textContent = fail;
+
+    buildToppers();
+}
+
+function buildToppers() {
+    var container = document.getElementById('toppersContainer');
+    var classes = ['FY MCA', 'SY MCA', 'TY MCA'];
+    var html = '';
+
+    classes.forEach(function(cls) {
+        /* Subjects this teacher teaches in this class */
+        var clsSubs = mySubjects.filter(function(s) { return s.class === cls; });
+        if (!clsSubs.length) return;
+
+        var sems = [...new Set(clsSubs.map(function(s) { return parseInt(s.semester, 10); }))];
+        sems.forEach(function(sem) {
+            var stuInClass = allStudents.filter(function(s) { return s.class === cls && parseInt(s.semester, 10) === sem; });
+            var pubRes = allResults.filter(function(r) {
+                return stuInClass.some(function(s) { return s.id === r.student_id; }) && r.published;
+            });
+            if (!pubRes.length) return;
+
+            /* Find topper by percentage */
+            var top = pubRes.reduce(function(best, r) { return r.percentage > best.percentage ? r : best; }, pubRes[0]);
+            var topStu = allStudents.find(function(s) { return s.id === top.student_id; });
+            if (!topStu) return;
+
+            html += '<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #ede8dc;">' +
+                '<div style="font-size:24px;">🏅</div>' +
+                '<div style="flex:1;">' +
+                    '<strong style="font-size:14px;">' + esc(topStu.name) + '</strong>' +
+                    '<div style="font-size:12px;color:#718096;">' + esc(cls) + ' · Sem ' + sem + ' · Roll: ' + esc(topStu.roll_number) + '</div>' +
+                '</div>' +
+                '<div style="text-align:right;">' +
+                    '<strong style="color:#0f1f3d;font-size:16px;">' + top.percentage + '%</strong>' +
+                    '<div style="font-size:12px;"><span class="badge badge-green">' + top.grade + '</span></div>' +
+                '</div>' +
+            '</div>';
+        });
+    });
+
+    container.innerHTML = html || '<p style="color:#718096;font-size:14px;">No published results yet.</p>';
+}
+
+
+/* ============================================================
+   Students & Marks
+   ============================================================ */
+document.getElementById('markClassFilter').addEventListener('change', loadClassStudents);
+document.getElementById('markSemFilter').addEventListener('change', loadClassStudents);
+
+function loadClassStudents() {
+    var cls = document.getElementById('markClassFilter').value;
+    var sem = document.getElementById('markSemFilter').value;
+    if (!cls || !sem) return;
+
+    /* parseInt so strict === works correctly against DB integer values */
+    var semInt    = parseInt(sem, 10);
+    var container = document.getElementById('classSubjectsList');
+
+    /* Show all students in this class+sem — regardless of teacher subject assignment */
+    var students = allStudents.filter(function(s) { return s.class === cls && s.semester === semInt; });
+
+    if (!students.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">&#x1F392;</div><p>No students found in ' + esc(cls) + ' Semester ' + sem + '.<br><small style="color:#aaa;">Students must be added by the admin first.</small></p></div>';
+        return;
+    }
+
+    /* Only subjects this teacher is assigned to teach in this slot */
+    var subjectsInSlot = mySubjects.filter(function(s) { 
+        return s.class === cls && parseInt(s.semester, 10) === semInt; 
+    });
+
+    /* Show a warning if teacher has no subjects assigned here */
+    var subjectInfo = subjectsInSlot.length
+        ? subjectsInSlot.map(function(s) { return s.subject_name; }).join(', ')
+        : '<span style="color:#b45309;">&#x26A0; No subjects assigned to you for this slot</span>';
+
+    var html = '<div class="card">' +
+        '<div class="card-header">' +
+            '<h3>' + esc(cls) + ' \u2014 Semester ' + sem + '</h3>' +
+            '<span style="font-size:13px;color:#718096;">' + students.length + ' students &nbsp;&middot;&nbsp; ' + subjectInfo + '</span>' +
+        '</div>' +
+        '<div class="table-wrap"><table>' +
+        '<thead><tr><th>#</th><th>Name</th><th>Roll No.</th>';
+
+    /* Column header per assigned subject */
+    subjectsInSlot.forEach(function(sub) {
+        html += '<th>' + esc(sub.subject_name) + '<br><small style="color:#aaa;font-weight:400;">/' + sub.max_marks + '</small></th>';
+    });
+    html += '<th>Actions</th></tr></thead><tbody>';
+
+    students.forEach(function(stu, idx) {
+        html += '<tr><td>' + (idx+1) + '</td><td><strong>' + esc(stu.name) + '</strong></td>' +
+            '<td><span class="badge badge-navy">' + esc(stu.roll_number) + '</span></td>';
+
+        subjectsInSlot.forEach(function(sub) {
+            /* Lookup saved mark for this student + subject */
+            var mark  = allMarks.find(function(m) { return m.student_id === stu.id && m.subject_id === sub.id; });
+            var score = mark ? mark.score : null;
+            html += '<td>' + (score !== null ? '<strong>' + score + '</strong>' : '<span style="color:#aaa;">\u2014</span>') + '</td>';
+        });
+
+        /* Pass semInt so the === check inside openMarksModal also gets an integer */
+        html += '<td><button class="action-btn marks" onclick="openMarksModal(\'' + stu.id + '\',\'' + esc(cls) + '\',' + semInt + ')">&#x270F; Enter Marks</button></td>';
+        html += '</tr>';
+    });
+
+    html += '</tbody></table></div></div>';
+    container.innerHTML = html;
+}
+
+
+
+/* Marks entry modal */
+async function openMarksModal(stuId, cls, sem) {
+    currentMarksStudentId = stuId;
+    /* sem arrives as integer from the onclick button; parseInt guards any edge cases */
+    var semInt = parseInt(sem, 10);
+    var stu  = allStudents.find(function(s) { return s.id === stuId; });
+    var subs = mySubjects.filter(function(s) { 
+        return s.class === cls && parseInt(s.semester, 10) === semInt; 
+    });
+
+    document.getElementById('marksModalTitle').textContent = 'Enter Marks — ' + stu.name;
+
+    /* Build form */
+    var html = '<p style="font-size:13px;color:#718096;margin-bottom:18px;">Roll: ' + stu.roll_number + ' · ' + esc(cls) + ' · Sem ' + sem + '</p>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+
+    subs.forEach(function(sub) {
+        var mark = allMarks.find(function(m) { return m.student_id === stuId && m.subject_id === sub.id; });
+        var val  = mark ? mark.score : '';
+        html += '<div class="form-group">' +
+            '<label>' + esc(sub.subject_name) + ' <span style="color:#aaa;font-weight:400;">(max ' + sub.max_marks + ')</span></label>' +
+            '<input type="number" min="0" max="' + sub.max_marks + '" step="0.5" id="mark_' + sub.id + '" value="' + val + '" placeholder="Enter score">' +
+            '</div>';
+    });
+
+    html += '</div><div id="marksMsg" class="message-box"></div>';
+    document.getElementById('marksModalBody').innerHTML = html;
+    document.getElementById('marksModal').style.display = 'flex';
+}
+
+async function saveMarks() {
+    var stuId = currentMarksStudentId;
+    var stu   = allStudents.find(function(s) { return s.id === stuId; });
+    /* stu.semester is already an integer from the DB, but parseInt handles any edge cases */
+    var subs  = mySubjects.filter(function(s) { 
+        return s.class === stu.class && parseInt(s.semester, 10) === parseInt(stu.semester, 10); 
+    });
+
+    var ops = [];
+    var hasError = false;
+
+    subs.forEach(function(sub) {
+        var inp = document.getElementById('mark_' + sub.id);
+        if (!inp || inp.value === '') return;
+        var score = parseFloat(inp.value);
+        if (isNaN(score) || score < 0 || score > sub.max_marks) {
+            showMsg('marksMsg', 'Score for ' + sub.subject_name + ' is invalid (0–' + sub.max_marks + ').', 'error');
+            hasError = true;
+        }
+        ops.push({ student_id: stuId, subject_id: sub.id, score: score, entered_by: teacher.id });
+    });
+
+    if (hasError) return;
+    if (!ops.length) { showMsg('marksMsg', 'No marks entered.', 'error'); return; }
+
+    /* Upsert all marks */
+    var { error } = await window._db.from('marks').upsert(ops, { onConflict: 'student_id,subject_id' });
+    if (error) { showMsg('marksMsg', error.message, 'error'); return; }
+
+    /* Refresh local marks */
+    var { data: fresh } = await window._db.from('marks').select('*').eq('student_id', stuId);
+    allMarks = allMarks.filter(function(m) { return m.student_id !== stuId; }).concat(fresh || []);
+
+    /* Recalculate result row for this student */
+    await recalcResult(stuId, stu.class, stu.semester);
+
+    closeModal('marksModal');
+    loadClassStudents();
+    showMsg('msgBox', 'Marks saved for ' + stu.name + '.', 'success');
+}
+
+/* Compute total, percentage, grade from marks and upsert into results */
+async function recalcResult(stuId, cls, sem) {
+    var semInt = parseInt(sem, 10);
+    var subs = mySubjects.filter(function(s) { 
+        return s.class === cls && parseInt(s.semester, 10) === semInt; 
+    });
+    var total = 0, maxTotal = 0, allFilled = true;
+
+    subs.forEach(function(sub) {
+        var mark = allMarks.find(function(m) { return m.student_id === stuId && m.subject_id === sub.id; });
+        if (mark && mark.score !== null) {
+            total    += mark.score;
+            maxTotal += sub.max_marks;
+        } else {
+            allFilled = false;
+        }
+    });
+
+    if (maxTotal === 0) return;
+
+    var pct   = Math.round((total / maxTotal) * 100 * 100) / 100;
+    var grade = window.calcGrade(pct);
+    var existing = allResults.find(function(r) { return r.student_id === stuId; });
+
+    var payload = { student_id: stuId, total_marks: total, max_marks: maxTotal, percentage: pct, grade: grade };
+    var { data } = await window._db.from('results')
+        .upsert({ ...payload, published: existing ? existing.published : false }, { onConflict: 'student_id' })
+        .select().single();
+
+    if (data) {
+        allResults = allResults.filter(function(r) { return r.student_id !== stuId; });
+        allResults.push(data);
+    }
+}
+
+
+/* ============================================================
+   Publish Results
+   ============================================================ */
+document.getElementById('pubClassFilter').addEventListener('change', loadPublishView);
+document.getElementById('pubSemFilter').addEventListener('change',   loadPublishView);
+
+async function loadPublishView() {
+    var cls = document.getElementById('pubClassFilter').value;
+    var sem = document.getElementById('pubSemFilter').value;
+    if (!cls || !sem) return;
+
+    var semInt = parseInt(sem, 10);
+    var students = allStudents.filter(function(s) { return s.class === cls && s.semester === semInt; });
+    var container = document.getElementById('publishContainer');
+
+    if (!students.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🎒</div><p>No students in ' + esc(cls) + ' Sem ' + sem + '.</p></div>';
+        return;
+    }
+
+    /* Check if all marks are filled for every student */
+    var subjectsInSlot = mySubjects.filter(function(s) { 
+        return s.class === cls && parseInt(s.semester, 10) === semInt; 
+    });
+    var allFilled = students.every(function(stu) {
+        return subjectsInSlot.every(function(sub) {
+            var m = allMarks.find(function(mk) { return mk.student_id === stu.id && mk.subject_id === sub.id; });
+            return m && m.score !== null;
+        });
+    });
+
+    var html = '<div class="card">' +
+        '<div class="card-header">' +
+            '<h3>' + esc(cls) + ' — Semester ' + sem + ' Results</h3>' +
+            '<button class="btn btn-primary btn-sm" onclick="publishAllClass(\'' + esc(cls) + '\',' + sem + ')" ' +
+                (!allFilled ? 'disabled title="Some students have missing marks"' : '') + '>📢 Publish All</button>' +
+        '</div>' +
+        '<div class="table-wrap"><table>' +
+        '<thead><tr><th>#</th><th>Name</th><th>Roll No.</th><th>Total</th><th>%</th><th>Grade</th><th>Status</th><th>Action</th></tr></thead>' +
+        '<tbody>';
+
+    students.forEach(function(stu, idx) {
+        var res = allResults.find(function(r) { return r.student_id === stu.id; });
+        var marksReady = subjectsInSlot.every(function(sub) {
+            var m = allMarks.find(function(mk) { return mk.student_id === stu.id && mk.subject_id === sub.id; });
+            return m && m.score !== null;
+        });
+
+        var statusBadge = res && res.published
+            ? '<span class="badge badge-green">✅ Published</span>'
+            : '<span class="badge badge-gray">Pending</span>';
+
+        var pubBtn = '';
+        if (res && !res.published && marksReady) {
+            pubBtn = '<button class="action-btn publish" onclick="publishSingle(\'' + stu.id + '\')">Publish</button>';
+        } else if (!marksReady) {
+            pubBtn = '<span style="font-size:12px;color:#aaa;">No marks</span>';
+        } else if (res && res.published) {
+            pubBtn = '<span style="font-size:12px;color:#22c55e;">Done</span>';
+        }
+
+        html += '<tr>' +
+            '<td>' + (idx+1) + '</td>' +
+            '<td><strong>' + esc(stu.name) + '</strong></td>' +
+            '<td><span class="badge badge-navy">' + esc(stu.roll_number) + '</span></td>' +
+            '<td>' + (res ? res.total_marks + '/' + res.max_marks : '—') + '</td>' +
+            '<td>' + (res ? res.percentage + '%' : '—') + '</td>' +
+            '<td>' + (res ? '<span class="badge ' + (res.percentage >= 35 ? 'badge-green' : 'badge-red') + '">' + res.grade + '</span>' : '—') + '</td>' +
+            '<td>' + statusBadge + '</td>' +
+            '<td>' + pubBtn + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div></div>';
+    container.innerHTML = html;
+}
+
+async function publishSingle(stuId) {
+    var { error } = await window._db.from('results').update({ published: true, published_at: new Date().toISOString() }).eq('student_id', stuId);
+    if (error) { showMsg('msgBox', error.message, 'error'); return; }
+
+    allResults = allResults.map(function(r) {
+        return r.student_id === stuId ? { ...r, published: true } : r;
+    });
+    loadPublishView();
+    showMsg('msgBox', 'Result published.', 'success');
+}
+
+async function publishAllClass(cls, sem) {
+    var semInt = parseInt(sem, 10);
+    var students = allStudents.filter(function(s) { return s.class === cls && parseInt(s.semester, 10) === semInt; });
+    var ids = students.map(function(s) { return s.id; });
+
+    /* Only publish those that have results computed */
+    var resIds = allResults.filter(function(r) { return ids.includes(r.student_id); }).map(function(r) { return r.student_id; });
+    if (!resIds.length) { showMsg('msgBox', 'No results to publish.', 'error'); return; }
+
+    var { error } = await window._db.from('results')
+        .update({ published: true, published_at: new Date().toISOString() })
+        .in('student_id', resIds);
+
+    if (error) { showMsg('msgBox', error.message, 'error'); return; }
+
+    allResults = allResults.map(function(r) {
+        return resIds.includes(r.student_id) ? { ...r, published: true } : r;
+    });
+    loadPublishView();
+    showMsg('msgBox', 'All results published for ' + cls + ' Sem ' + sem + '.', 'success');
+}
+
+
+/* ============================================================
+   Analysis Charts
+   ============================================================ */
+function buildAnalysisCharts() {
+    var grid = document.getElementById('analysisChartsGrid');
+    grid.innerHTML = '';
+
+    if (!mySubjects.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:span 2;"><div class="empty-icon">📊</div><p>No subjects assigned.</p></div>';
+        return;
+    }
+
+    /* One pie chart per subject */
+    mySubjects.forEach(function(sub, i) {
+        var stuInSlot = allStudents.filter(function(s) { return s.class === sub.class && s.semester === sub.semester; });
+        var pubRes = allResults.filter(function(r) {
+            return stuInSlot.some(function(s) { return s.id === r.student_id; }) && r.published;
+        });
+
+        var pass = pubRes.filter(function(r) { return r.percentage >= 35; }).length;
+        var fail = pubRes.length - pass;
+
+        var card = document.createElement('div');
+        card.className = 'chart-card';
+        card.innerHTML = '<h4>' + esc(sub.subject_name) + '<br><small style="font-weight:400;color:#718096;">' + esc(sub.class) + ' · Sem ' + sub.semester + '</small></h4>' +
+            '<canvas id="achart_' + i + '"></canvas>';
+        grid.appendChild(card);
+
+        new Chart(document.getElementById('achart_' + i), {
+            type: 'doughnut',
+            data: {
+                labels: ['Passed', 'Failed', 'Awaited'],
+                datasets: [{ data: [pass, fail, stuInSlot.length - pubRes.length], backgroundColor: ['#4ade80','#f87171','#93c5fd'], borderWidth: 2 }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+        });
+    });
+}
+
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(function(ov) {
+    ov.addEventListener('click', function(e) { if (e.target === ov) ov.style.display = 'none'; });
+});
+
+</script>
+</body>
+</html>
